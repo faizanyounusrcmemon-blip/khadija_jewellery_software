@@ -1,15 +1,17 @@
+/* ✅ Top Navigation Bar */
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #222;
   color: white;
-  padding: 10px 20px;
+  padding: 14px 20px;   /* ✅ increased height */
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
+/* ✅ Left Menu Items */
 .nav-left {
   display: flex;
   align-items: center;
@@ -22,10 +24,12 @@
   letter-spacing: 1px;
 }
 
+/* ✅ Menu container */
 .menu {
   position: relative;
 }
 
+/* ✅ Menu Button */
 .menu-btn {
   background: transparent;
   color: white;
@@ -41,9 +45,10 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* ✅ Dropdown List */
 .menu-list {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 10px);   /* ✅ Fixed gap so dropdown doesn't close */
   left: 0;
   background: white;
   color: #333;
@@ -53,10 +58,10 @@
   display: flex;
   flex-direction: column;
   z-index: 999;
-  margin-top: 2px; /* 👈 gap remove karne ke لیے sirf 2px رکھا */
   animation: fadeIn 0.15s ease-in-out;
 }
 
+/* ✅ Dropdown Item Buttons */
 .menu-list button {
   background: none;
   border: none;
@@ -71,6 +76,7 @@
   background: #f0f0f0;
 }
 
+/* ✅ Right Actions */
 .right-actions {
   display: flex;
   align-items: center;
@@ -98,6 +104,7 @@
   background: #cc0000;
 }
 
+/* ✅ Dropdown Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
+
 import Dashboard from "./pages/Dashboard";
 import SaleEntry from "./pages/SaleEntry";
 import SaleReturn from "./pages/SaleReturn";
@@ -15,29 +16,37 @@ import CustomerProfile from "./pages/CustomerProfile";
 import ManageUsers from "./pages/ManageUsers";
 import StockReport from "./pages/StockReport";
 import BarcodePrint from "./pages/BarcodePrint";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 import InvoiceEdit from "./pages/InvoiceEdit";
 
+// ✅ NEW IMPORTS
+import SaleReport from "./pages/SaleReport";
+import MonthlyReport from "./pages/MonthlyReport";
+
 export default function App() {
-  // ✅ ہمیشہ login سے شروع: sessionStorage استعمال
   const [page, setPage] = useState("login");
   const [user, setUser] = useState(null);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  // ہر render پر fresh user لو
+  // ✅ Load saved user
   useEffect(() => {
-    const u = sessionStorage.getItem("user");
-    setUser(u ? JSON.parse(u) : null);
-  }, [page]);
+    const saved = sessionStorage.getItem("user");
+    if (saved) {
+      setUser(JSON.parse(saved));
+      setPage("dashboard");
+    }
+  }, []);
 
-  // جب login ہوا تو dashboard جاو، ورنہ login
+  // ✅ Login effect
   useEffect(() => {
-    if (!user) setPage("login");
-    else if (page === "login") setPage("dashboard");
-  }, [user, page]);
+    if (user) {
+      setPage("dashboard");
+      sessionStorage.setItem("user", JSON.stringify(user));
+    }
+  }, [user]);
 
-  const renderPage = () => {
-    if (!user) return <Login onNavigate={setPage} />;
+  // ✅ PAGE ROUTER
+  function renderPage() {
+    if (!user) return <Login onLogin={(u) => setUser(u)} />;
 
     switch (page) {
       case "dashboard": return <Dashboard onNavigate={setPage} />;
@@ -48,29 +57,39 @@ export default function App() {
         return (
           <SaleDetail
             onNavigate={setPage}
-            onEditInvoice={(inv) => { setSelectedInvoice(inv); setPage("invoice-edit"); }}
+            onEditInvoice={(inv) => {
+              sessionStorage.setItem("selectedInvoice", JSON.stringify(inv));
+              setPage("invoice-edit");
+            }}
           />
         );
       case "sale-item-detail": return <SaleItemDetail onNavigate={setPage} />;
+
       case "purchase-entry": return <PurchaseEntry onNavigate={setPage} />;
       case "purchase-return": return <PurchaseReturn onNavigate={setPage} />;
       case "purchase-detail": return <PurchaseDetail onNavigate={setPage} />;
       case "purchase-item-detail": return <PurchaseItemDetail onNavigate={setPage} />;
+
       case "barcode-print": return <BarcodePrint onNavigate={setPage} />;
+
       case "item-profile": return <ItemProfile onNavigate={setPage} />;
       case "customer-profile": return <CustomerProfile onNavigate={setPage} />;
       case "manage-users": return <ManageUsers onNavigate={setPage} />;
+
       case "stock-report": return <StockReport onNavigate={setPage} />;
+
+      // ✅ NEW REPORT PAGES
+      case "sale-report": return <SaleReport onNavigate={setPage} />;
+      case "monthly-report": return <MonthlyReport onNavigate={setPage} />;
+
       case "invoice-edit": return <InvoiceEdit onNavigate={setPage} />;
 
-      // invoice-edit page placeholder remove kia hai kyun ke file nahi thi:
       default: return <Dashboard onNavigate={setPage} />;
     }
-  };
+  }
 
   return (
     <div className="app-root">
-      {/* ✅ Navbar صرف login کے بعد */}
       {user && <Navbar onNavigate={setPage} />}
       <div className="content-area">{renderPage()}</div>
     </div>

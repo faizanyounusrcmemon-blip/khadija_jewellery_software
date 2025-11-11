@@ -8,11 +8,12 @@ export default function ManageUsers({ onNavigate }) {
   const perms = [
     "sale_entry", "sale_return", "sale_detail", "sale_item_detail",
     "purchase_entry", "purchase_return", "purchase_detail", "purchase_item_detail",
-    "item_profile", "customer_profile", "manage_users", "stock_report"
+    "item_profile", "customer_profile", "manage_users", "stock_report",
+    "sale_report", "monthly_report"
   ];
 
   async function loadUsers() {
-    const { data } = await supabase.from("users").select("*");
+    const { data } = await supabase.from("app_users").select("*");
     setUsers(data || []);
   }
 
@@ -28,9 +29,11 @@ export default function ManageUsers({ onNavigate }) {
 
   const saveAll = async () => {
     setSaving(true);
+
     for (const u of users) {
-      await supabase.from("users").update(u).eq("id", u.id);
+      await supabase.from("app_users").update(u).eq("id", u.id); // ✅ FIXED
     }
+
     await loadUsers();
     setSaving(false);
     alert("✅ Permissions updated!");
@@ -50,14 +53,17 @@ export default function ManageUsers({ onNavigate }) {
             ))}
           </tr>
         </thead>
+
         <tbody>
           {users.map((u, i) => (
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.role}</td>
+
               {perms.map((p) => (
                 <td key={p}>
-                  <input type="checkbox"
+                  <input
+                    type="checkbox"
                     checked={!!u[p]}
                     onChange={() => toggle(i, p)}
                   />
