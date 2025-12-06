@@ -17,6 +17,7 @@ import StockLedger from "./pages/StockLedger";
 import ArchiveOpeningStock from "./pages/ArchiveOpeningStock";
 import SnapshotReport from "./pages/SnapshotReport";
 import SnapshotHistory from "./pages/SnapshotHistory";
+import MemoryStatus from "./pages/MemoryStatus";
 
 import PurchaseEntry from "./pages/PurchaseEntry";
 import PurchaseReturn from "./pages/PurchaseReturn";
@@ -182,6 +183,7 @@ export default function App() {
       case "purchase-edit": return <PurchaseEdit onNavigate={setPage} />;
       case "snapshot-report": return <SnapshotReport onNavigate={setPage} />;
       case "snapshot-history": return <SnapshotHistory onNavigate={setPage} />;
+      case "memory-status": return <MemoryStatus onNavigate={setPage} />;
 
       case "purchase-delete-report": return <PurchaseDeleteReport onNavigate={setPage} />;
 
