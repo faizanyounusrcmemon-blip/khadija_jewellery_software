@@ -1,5 +1,5 @@
 // =====================================================
-//   FINAL Restore.jsx (Download Password + All Fixes)
+//   FINAL Restore.jsx (Date Sorting + Size Fix + Full Clean UI)
 // =====================================================
 
 import React, { useEffect, useState } from "react";
@@ -11,8 +11,30 @@ export default function Restore({ onNavigate }) {
   const [selectedTable, setSelectedTable] = useState("");
   const [search, setSearch] = useState("");
 
-  const TABLES = ["sales","purchases","items","customers","app_users","sale_returns", "stock_snapshots", "snapshot_logs"];
+  const TABLES = [
+    "sales",
+    "purchases",
+    "items",
+    "customers",
+    "app_users",
+    "sale_returns",
+    "stock_snapshots",
+    "snapshot_logs",
+  ];
 
+  // ---------------------------------------------
+  // FILE SIZE FORMATTER
+  // ---------------------------------------------
+  function formatSize(bytes) {
+    if (!bytes) return "0 B";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  // ---------------------------------------------
+  // LOAD BACKUPS
+  // ---------------------------------------------
   useEffect(() => {
     loadBackups();
   }, []);
@@ -20,12 +42,19 @@ export default function Restore({ onNavigate }) {
   async function loadBackups() {
     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/list-backups`);
     const data = await res.json();
+
     if (data.success) {
-      const sorted = data.files.sort((a, b) => (a.date < b.date ? 1 : -1));
+      // FIXED SORT: Latest backup on top
+      const sorted = data.files.sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
       setBackups(sorted);
     }
   }
 
+  // ---------------------------------------------
+  // RESTORE FILE
+  // ---------------------------------------------
   async function restoreFile(fileName, mode, table = null) {
     const password = prompt("Enter Restore Password:");
     if (!password) return;
@@ -61,6 +90,9 @@ export default function Restore({ onNavigate }) {
     alert(data.success ? "✔ Restore Successful!" : "❌ " + data.error);
   }
 
+  // ---------------------------------------------
+  // DELETE BACKUP
+  // ---------------------------------------------
   async function deleteBackup(fileName) {
     const password = prompt("Enter Password to Delete:");
     if (!password) return;
@@ -84,12 +116,13 @@ export default function Restore({ onNavigate }) {
     }
   }
 
-  // ⭐ FIXED DOWNLOAD WITH PASSWORD PROTECTION
+  // ---------------------------------------------
+  // DOWNLOAD BACKUP (PASSWORD PROTECTED)
+  // ---------------------------------------------
   async function downloadBackup(fileName) {
     const password = prompt("Enter Password to Download:");
     if (!password) return;
 
-    // 🔐 Download password check
     if (password !== "faizanyounus") {
       alert("❌ Incorrect Password!");
       return;
@@ -104,13 +137,20 @@ export default function Restore({ onNavigate }) {
     link.click();
   }
 
+  // ---------------------------------------------
+  // SEARCH FILTER
+  // ---------------------------------------------
   const filtered = backups.filter((b) =>
     b.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // =========================================================
+  // UI STARTS HERE
+  // =========================================================
   return (
     <div style={{ padding: 20, color: "white" }}>
       
+      {/* BACK BUTTON */}
       <button
         onClick={() => onNavigate("dashboard")}
         style={{
@@ -119,6 +159,7 @@ export default function Restore({ onNavigate }) {
           borderRadius: "6px",
           border: "none",
           color: "white",
+          fontWeight: "bold",
         }}
       >
         ⬅ Back
@@ -126,6 +167,7 @@ export default function Restore({ onNavigate }) {
 
       <h1 style={{ marginTop: 20 }}>📦 Backup History</h1>
 
+      {/* SEARCH BAR */}
       <input
         type="text"
         placeholder="Search Backup..."
@@ -136,9 +178,11 @@ export default function Restore({ onNavigate }) {
           padding: "8px",
           borderRadius: "6px",
           marginTop: "15px",
+          border: "1px solid #666",
         }}
       />
 
+      {/* PROGRESS BAR */}
       {restoring && (
         <div style={{ marginTop: 15 }}>
           <div
@@ -163,6 +207,7 @@ export default function Restore({ onNavigate }) {
         </div>
       )}
 
+      {/* BACKUP CARDS */}
       <div
         style={{
           marginTop: 25,
@@ -178,12 +223,14 @@ export default function Restore({ onNavigate }) {
               background: "#1c1c1c",
               padding: "18px",
               borderRadius: "10px",
+              border: "1px solid #333",
             }}
           >
-            <h3>📁 {file.name}</h3>
+            <h3 style={{ marginBottom: 5 }}>📁 {file.name}</h3>
             <p>📅 {file.date}</p>
-            <p>📦 Size: {file.size}</p>
+            <p>📦 Size: {formatSize(file.size)}</p>
 
+            {/* RESTORE OPTIONS */}
             <div style={{ marginTop: 10 }}>
               <button
                 onClick={() => restoreFile(file.name, "full")}
@@ -201,11 +248,21 @@ export default function Restore({ onNavigate }) {
               <select
                 onChange={(e) => setSelectedTable(e.target.value)}
                 defaultValue=""
-                style={{ padding: "6px", borderRadius: "6px", marginRight: 10 }}
+                style={{
+                  padding: "6px",
+                  borderRadius: "6px",
+                  marginRight: 10,
+                  background: "#fff",
+                  color: "#000",
+                }}
               >
-                <option value="" disabled>Table</option>
+                <option value="" disabled>
+                  Table
+                </option>
                 {TABLES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
 
@@ -222,6 +279,7 @@ export default function Restore({ onNavigate }) {
               </button>
             </div>
 
+            {/* DOWNLOAD + DELETE */}
             <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
               <button
                 onClick={() => downloadBackup(file.name)}
@@ -247,11 +305,9 @@ export default function Restore({ onNavigate }) {
                 🗑 Delete
               </button>
             </div>
-
           </div>
         ))}
       </div>
     </div>
   );
 }
-
