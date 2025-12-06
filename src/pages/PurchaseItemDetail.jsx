@@ -1,7 +1,8 @@
+// src/pages/PurchaseItemDetail.jsx
 import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 
-export default function PurchaseItemDetail() {
+export default function PurchaseItemDetail({ onNavigate }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [rows, setRows] = useState([]);
@@ -9,28 +10,29 @@ export default function PurchaseItemDetail() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Default date range (last 30 days)
+  // Default last 30 days
   useEffect(() => {
     const t = new Date();
     const f = new Date();
-    f.setDate(t.getDate() - 30);
+    f.setDate(t.getDate() - 365);
     setFrom(f.toISOString().slice(0, 10));
     setTo(t.toISOString().slice(0, 10));
   }, []);
 
-  // Load items on mount and when filters change
   useEffect(() => {
     if (from && to) load();
   }, [from, to, itemQuery]);
 
-  // Load purchase items
+  // ⭐ Load Table (Soft delete hidden)
   async function load() {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("purchases")
       .select(
-        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode"
+        "id, invoice_no, company_name, purchase_date, item_code, item_name, sale_price, qty, barcode, is_deleted"
       )
+      .eq("is_deleted", false) // ⭐⭐ SOFT DELETE HIDE DONE ⭐⭐
       .gte("purchase_date", from)
       .lte("purchase_date", to)
       .order("purchase_date", { ascending: false });
@@ -55,31 +57,55 @@ export default function PurchaseItemDetail() {
     setLoading(false);
   }
 
-  // Search suggestions from items table
+  // Search suggestions
   async function loadSuggestions(q) {
     setItemQuery(q);
     if (!q.trim()) return setSuggestions([]);
+
     const { data } = await supabase
       .from("items")
       .select("item_name, item_code")
       .ilike("item_name", `%${q}%`)
       .limit(10);
+
     setSuggestions(data || []);
   }
 
-  // Print single item barcode
+  // Single Item Thermal Print
   function printBarcodes(r) {
     localStorage.setItem("print_invoice", r.invoice_no);
     localStorage.setItem("print_barcode", r.barcode);
     localStorage.setItem("print_name", r.item_name);
     localStorage.setItem("print_price", r.sale_price || 0);
     localStorage.setItem("print_qty", r.qty);
-    window.open("/print.html", "_blank"); // ✅ standalone page
+    window.open("/print.html", "_blank");
+  }
+
+  // Exit Button
+  function handleExit() {
+    if (typeof onNavigate === "function") onNavigate("dashboard");
   }
 
   return (
     <div style={{ padding: 12, color: "#fff", minHeight: "100vh" }}>
-      <h2 style={{ color: "#f3c46b" }}>Purchase Item Detail</h2>
+
+      {/* Header + Exit */}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h2 style={{ color: "#f3c46b" }}>Purchase Item Detail</h2>
+        <button
+          onClick={handleExit}
+          style={{
+            background: "#c33",
+            color: "#fff",
+            padding: "8px 12px",
+            borderRadius: 6,
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          Exit
+        </button>
+      </div>
 
       {/* Filters */}
       <div style={{ marginBottom: 12 }}>
@@ -159,25 +185,26 @@ export default function PurchaseItemDetail() {
         >
           <thead>
             <tr style={{ background: "#333", color: "#f3c46b" }}>
-              <th style={{ padding: 6 }}>Inv</th>
-              <th style={{ padding: 6 }}>Date</th>
-              <th style={{ padding: 6 }}>Company</th>
-              <th style={{ padding: 6 }}>Item</th>
-              <th style={{ padding: 6 }}>Qty</th>
-              <th style={{ padding: 6 }}>Barcode</th>
-              <th style={{ padding: 6 }}>Print</th>
+              <th>Inv</th>
+              <th>Date</th>
+              <th>Company</th>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Barcode</th>
+              <th>Print</th>
             </tr>
           </thead>
+
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} style={{ borderBottom: "1px solid #555" }}>
-                <td style={{ padding: 6 }}>{r.invoice_no}</td>
-                <td style={{ padding: 6 }}>{r.purchase_date}</td>
-                <td style={{ padding: 6 }}>{r.company_name}</td>
-                <td style={{ padding: 6 }}>{r.item_name}</td>
-                <td style={{ padding: 6 }}>{r.qty}</td>
-                <td style={{ padding: 6 }}>{r.barcode}</td>
-                <td style={{ padding: 6 }}>
+                <td>{r.invoice_no}</td>
+                <td>{r.purchase_date}</td>
+                <td>{r.company_name}</td>
+                <td>{r.item_name}</td>
+                <td>{r.qty}</td>
+                <td>{r.barcode}</td>
+                <td>
                   <button
                     onClick={() => printBarcodes(r)}
                     style={{
@@ -197,7 +224,7 @@ export default function PurchaseItemDetail() {
           </tbody>
         </table>
       ) : (
-        <p style={{ marginTop: 20, color: "#ccc" }}>No records found.</p>
+        <p style={{ color: "#ccc", marginTop: 20 }}>No records found.</p>
       )}
     </div>
   );

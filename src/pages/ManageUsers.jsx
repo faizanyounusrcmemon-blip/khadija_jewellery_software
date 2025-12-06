@@ -5,11 +5,38 @@ export default function ManageUsers({ onNavigate }) {
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  // ⭐ UPDATED PERMISSIONS LIST (NEW 2 ADDED)
   const perms = [
-    "sale_entry", "sale_return", "sale_detail", "sale_item_detail",
-    "purchase_entry", "purchase_return", "purchase_detail", "purchase_item_detail",
-    "item_profile", "customer_profile", "manage_users", "stock_report",
-    "sale_report", "monthly_report"
+    "sale_entry",
+    "sale_return",
+    "sale_return_detail",
+    "sale_detail",
+    "sale_item_detail",
+
+    "purchase_entry",
+    "purchase_return",
+    "purchase_detail",
+    "purchase_item_detail",
+
+    "item_profile",
+    "customer_profile",
+    "manage_users",
+    "create_user",
+
+    "stock_report",
+    "stock-ledger",
+    "sale_report",
+    "monthly_report",
+    "archive_opening_stock",
+    "snapshot_report",
+    "snapshot_history",
+
+    "month_wise_summary",       // ⭐ NEW
+    "day_wise_sale_report",     // ⭐ NEW
+    "rate_difference_report",
+
+    "deleted_invoice_report",
+    "purchase_delete_report"
   ];
 
   async function loadUsers() {
@@ -31,7 +58,7 @@ export default function ManageUsers({ onNavigate }) {
     setSaving(true);
 
     for (const u of users) {
-      await supabase.from("app_users").update(u).eq("id", u.id); // ✅ FIXED
+      await supabase.from("app_users").update(u).eq("id", u.id);
     }
 
     await loadUsers();

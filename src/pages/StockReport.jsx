@@ -1,183 +1,144 @@
-// src/pages/StockReport.jsx
+// ===============================================
+//   STOCK REPORT (Professional UI Version)
+// ===============================================
+
 import React, { useEffect, useState } from "react";
-import supabase from "../utils/supabaseClient";
 
 export default function StockReport({ onNavigate }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [q, setQ] = useState("");
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    load();
-  }, [q]);
+  const API = import.meta.env.VITE_BACKEND_URL;
 
-  async function load() {
+  async function loadStock() {
     setLoading(true);
-    setError("");
 
     try {
-      const { data: purchases } = await supabase
-        .from("purchases")
-        .select("item_code, item_name, barcode, purchase_rate, qty");
+      const res = await fetch(`${API}/api/stock-report`);
+      const data = await res.json();
 
-      const map = new Map();
-
-      purchases?.forEach(r => {
-        const code = String(r.item_code || "");
-        if (!code) return;
-
-        const item = map.get(code) || {
-          item_code: code,
-          item_name: r.item_name,
-          barcode: r.barcode,
-          purchase_qty: 0,
-          purchase_rate: Number(r.purchase_rate || 0),
-          sold_qty: 0
-        };
-
-        item.purchase_qty += Number(r.qty || 0);
-        map.set(code, item);
-      });
-
-      // ✅ صرف وہی sales لا رہے ہیں جن کا deleted = false ہے
-      const { data: sales, error: salesErr } = await supabase
-        .from("sales")
-        .select("item_code, qty, is_deleted")
-        .eq("is_deleted", false); // 🔥 یہی اصل لائن ہے
-
-      if (salesErr) throw salesErr;
-
-      sales?.forEach(r => {
-        const code = String(r.item_code || "");
-        const qty = Number(r.qty || 0);
-        if (!code) return;
-
-        const item = map.get(code);
-        if (!item) return;
-
-        item.sold_qty += qty;
-      });
-
-      const final = [];
-
-      for (const it of map.values()) {
-        const remaining = it.purchase_qty - it.sold_qty;
-        final.push({
-          ...it,
-          remaining_qty: remaining,
-          remaining_amount: remaining * it.purchase_rate
-        });
+      if (!data.success) {
+        alert("❌ Error loading stock: " + data.error);
+      } else {
+        setRows(data.rows);
       }
-
-      const f = q
-        ? final.filter(
-            r =>
-              r.item_code.toLowerCase().includes(q.toLowerCase()) ||
-              r.item_name.toLowerCase().includes(q.toLowerCase()) ||
-              (r.barcode || "").toLowerCase().includes(q.toLowerCase())
-          )
-        : final;
-
-      setRows(f);
     } catch (err) {
-      setError(err.message);
+      alert("❌ Request failed");
     }
 
     setLoading(false);
   }
 
-  const totalValue = rows.reduce((s, r) => s + (r.remaining_amount || 0), 0);
-
-  function handleExit() {
-    if (typeof onNavigate === "function") onNavigate("dashboard");
-    else window.history.back();
-  }
+  useEffect(() => {
+    loadStock();
+  }, []);
 
   return (
-    <div style={{ padding: 12, color: "#fff", fontFamily: "Inter" }}>
-      <h2 style={{ color: "#f3c46b" }}>📦 Stock Report</h2>
+    <div className="container-fluid text-light py-3" style={{ fontFamily: "Inter" }}>
+      
+      {/* EXIT BUTTON */}
+      <button
+        onClick={() => onNavigate("dashboard")}
+        style={{
+          padding: "8px 18px",
+          border: "none",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          fontSize: "14px",
+          background: "linear-gradient(90deg, #ffb400, #ff6a00)",
+          color: "#fff",
+          boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
+          cursor: "pointer",
+          marginBottom: "12px",
+        }}
+      >
+        ⬅ Exit
+      </button>
 
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="🔍 Search item code / name / barcode"
-        style={{ width: "100%", padding: 8, borderRadius: 6, marginBottom: 10 }}
-      />
+      {/* TITLE + REFRESH BUTTON */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 style={{ color: "#ffca57", fontSize: "26px" }}>
+          📦 Stock Report
+        </h2>
 
-      <div style={{ background: "#111", padding: 8, borderRadius: 6 }}>
-        {loading ? "Loading..." : error ? error : (
-          <table style={{ width: "100%", fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: "#222" }}>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Purchased</th>
-                <th>Sold</th>
-                <th>Remain</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr><td colSpan="6">No items</td></tr>
-              ) : rows.map(r => (
-                <tr key={r.item_code}>
-                  <td>{r.item_code}</td>
-                  <td>{r.item_name}</td>
-                  <td style={{ textAlign: "right" }}>{r.purchase_qty}</td>
-                  <td style={{ textAlign: "right" }}>{r.sold_qty}</td>
-                  <td style={{ textAlign: "right", color: r.remaining_qty < 0 ? "red" : "#4caf50" }}>
-                    {r.remaining_qty}
-                  </td>
-                  <td style={{ textAlign: "right", color: "#f3c46b" }}>
-                    {r.remaining_amount.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        <div style={{ marginTop: 8 }}>
-          <b>Total Stock Value:</b> Rs {totalValue.toFixed(2)}
-        </div>
-
-        {/* Exit + Thermal Print Buttons */}
-        <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-          <button
-            onClick={handleExit}
-            style={{ background: "#c33", padding: "8px 10px", borderRadius: 6, color: "#fff", width: "100%" }}
-          >
-            Exit
-          </button>
-
-          <button
-            onClick={() => window.print()}
-            style={{ background: "#4caf50", padding: "8px 10px", borderRadius: 6, color: "#fff", width: "100%" }}
-          >
-            🖨️ Thermal Print
-          </button>
-        </div>
+        <button
+          onClick={loadStock}
+          disabled={loading}
+          style={{
+            padding: "7px 16px",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "bold",
+            background: "#0bd46e",
+            color: "#000",
+            boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
+            cursor: "pointer",
+          }}
+        >
+          🔄 {loading ? "Loading..." : "Refresh"}
+        </button>
       </div>
 
-      {/* Thermal Print CSS */}
-      <style>
-        {`
-        @media print {
-          body {
-            width: 80mm;
-            font-size: 11px;
-          }
-          table {
-            width: 100%;
-          }
-          button, input, h2 {
-            display: none !important;
-          }
-        }
-        `}
-      </style>
+      {/* DATA CARD */}
+      <div
+        className="card bg-dark border-secondary"
+        style={{
+          borderRadius: "10px",
+          boxShadow: "0 0 12px rgba(0,0,0,0.4)",
+        }}
+      >
+        <div className="card-body p-2">
+
+          {rows.length > 0 ? (
+            <div className="table-responsive" style={{ maxHeight: "75vh" }}>
+              <table
+                className="table table-dark table-bordered table-sm mb-0"
+                style={{ borderColor: "#555" }}
+              >
+                <thead
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#2b2b2b",
+                    color: "#ffca57",
+                    zIndex: 5,
+                  }}
+                >
+                  <tr>
+                    <th style={{ width: "140px" }}>Barcode</th>
+                    <th>Item Name</th>
+                    <th className="text-end" style={{ width: "120px" }}>Stock Qty</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={i}>
+                      <td>{r.barcode}</td>
+                      <td>{r.item_name}</td>
+                      <td
+                        className="text-end"
+                        style={{
+                          fontWeight: "bold",
+                          color: r.stock_qty > 0 ? "#00ff66" : "#ff5555",
+                        }}
+                      >
+                        {r.stock_qty}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            !loading && (
+              <p className="text-warning text-center py-3">
+                No stock available.
+              </p>
+            )
+          )}
+        </div>
+      </div>
     </div>
   );
 }
