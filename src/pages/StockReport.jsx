@@ -3,19 +3,15 @@
 // ===============================================
 
 import React, { useEffect, useState } from "react";
+import supabase from "../utils/supabaseClient";
 
 export default function StockReport({ onNavigate }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const API = import.meta.env.VITE_BACKEND_URL;
 
   async function loadStock() {
     setLoading(true);
-
-    try {
-      const res = await fetch(`${API}/api/stock-report`);
-      const data = await res.json();
 
       if (!data.success) {
         alert("❌ Error loading stock: " + data.error);
