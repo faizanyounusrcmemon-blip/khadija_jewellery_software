@@ -1,51 +1,29 @@
 // ===============================================
-//   STOCK REPORT (Supabase Version — Same as StockLedger)
+//   STOCK REPORT (Professional UI Version)
 // ===============================================
 
 import React, { useEffect, useState } from "react";
-import supabase from "../utils/supabaseClient";   // 👈 SAME IMPORT LIKE STOCK LEDGER
 
 export default function StockReport({ onNavigate }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ===============================================
-  // LOAD STOCK DIRECT FROM SUPABASE
-  // ===============================================
+  const API = import.meta.env.VITE_BACKEND_URL;
+
   async function loadStock() {
     setLoading(true);
 
     try {
-      // items table join with stock_snapshots latest
-      const { data: items } = await supabase
-        .from("items")
-        .select("barcode, item_name")
-        .order("item_name", { ascending: true });
+      const res = await fetch(`${API}/api/stock-report`);
+      const data = await res.json();
 
-      const { data: snaps } = await supabase
-        .from("stock_snapshots")
-        .select("barcode, stock_qty, snap_date");
-
-      // Merge: pick latest snapshot for each item
-      const final = items.map((it) => {
-        const all = snaps.filter((s) => s.barcode === it.barcode);
-
-        if (all.length === 0)
-          return { ...it, stock_qty: 0 };
-
-        const latest = all.sort(
-          (a, b) => new Date(b.snap_date) - new Date(a.snap_date)
-        )[0];
-
-        return {
-          ...it,
-          stock_qty: latest.stock_qty,
-        };
-      });
-
-      setRows(final);
+      if (!data.success) {
+        alert("❌ Error loading stock: " + data.error);
+      } else {
+        setRows(data.rows);
+      }
     } catch (err) {
-      alert("❌ Error: " + err.message);
+      alert("❌ Request failed");
     }
 
     setLoading(false);
@@ -77,7 +55,7 @@ export default function StockReport({ onNavigate }) {
         ⬅ Exit
       </button>
 
-      {/* HEADER + REFRESH */}
+      {/* TITLE + REFRESH BUTTON */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 style={{ color: "#ffca57", fontSize: "26px" }}>
           📦 Stock Report
@@ -101,7 +79,7 @@ export default function StockReport({ onNavigate }) {
         </button>
       </div>
 
-      {/* DATA TABLE */}
+      {/* DATA CARD */}
       <div
         className="card bg-dark border-secondary"
         style={{
@@ -129,9 +107,7 @@ export default function StockReport({ onNavigate }) {
                   <tr>
                     <th style={{ width: "140px" }}>Barcode</th>
                     <th>Item Name</th>
-                    <th className="text-end" style={{ width: "120px" }}>
-                      Stock Qty
-                    </th>
+                    <th className="text-end" style={{ width: "120px" }}>Stock Qty</th>
                   </tr>
                 </thead>
 
@@ -152,7 +128,6 @@ export default function StockReport({ onNavigate }) {
                     </tr>
                   ))}
                 </tbody>
-
               </table>
             </div>
           ) : (
