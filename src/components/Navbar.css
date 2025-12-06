@@ -1,114 +1,140 @@
-/* ✅ Top Navigation Bar */
+/* =========================================================
+   🌟 PREMIUM NAVBAR – GOLD THEME + BLUE HOVER DROPDOWNS
+   ========================================================= */
+
+/* TOP BAR */
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #222;
+  background: #1a1a1a;
   color: white;
-  padding: 14px 20px;   /* ✅ increased height */
+  padding: 16px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
 }
 
-/* ✅ Left Menu Items */
+/* LEFT SECTION */
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 25px;
 }
 
+/* BRAND */
 .brand {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
   letter-spacing: 1px;
+  background: linear-gradient(45deg, #ffd27f, #ffca45, #fff3b0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* ✅ Menu container */
+/* MENU (Each) */
 .menu {
   position: relative;
 }
 
-/* ✅ Menu Button */
+/* MENU BUTTON */
 .menu-btn {
   background: transparent;
-  color: white;
+  color: #ffd27f;
   border: none;
   font-size: 15px;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: 0.2s;
+  font-weight: 500;
 }
 
 .menu-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 210, 127, 0.12);
+  box-shadow: 0 0 12px rgba(255, 210, 127, 0.25);
 }
 
-/* ✅ Dropdown List */
+/* DROPDOWN LIST */
 .menu-list {
   position: absolute;
-  top: calc(100% + 10px);   /* ✅ Fixed gap so dropdown doesn't close */
+  top: calc(100% + 10px);
   left: 0;
-  background: white;
-  color: #333;
-  min-width: 180px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  min-width: 190px;
+  background: #e2f1ff;
+  color: #003366;
+  border-radius: 10px;
+  padding: 6px 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
   z-index: 999;
-  animation: fadeIn 0.15s ease-in-out;
+  animation: fadeIn 0.18s ease-in-out;
+  border: 1px solid #b8dcff;
 }
 
-/* ✅ Dropdown Item Buttons */
+/* DROPDOWN BUTTONS */
 .menu-list button {
-  background: none;
+  background: transparent;
   border: none;
   text-align: left;
   padding: 10px 14px;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: 0.2s;
+  color: #002e5c;
+  font-weight: 500;
+  border-radius: 6px;
+  margin: 2px 6px;
 }
 
 .menu-list button:hover {
-  background: #f0f0f0;
+  background: #b8dcff;
+  color: #000;
+  transform: translateX(4px);
 }
 
-/* ✅ Right Actions */
+/* RIGHT ACTIONS */
 .right-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+/* USER STATUS */
 .status {
   font-size: 13px;
-  background: #28a745;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: #0fa958;
+  padding: 4px 8px;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 600;
 }
 
+/* LOGOUT / RESTORE BUTTONS */
 .logout-btn {
-  background: #ff4444;
+  background: linear-gradient(45deg, #ff6b6b, #ff3b3b);
   border: none;
   color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: 0.2s;
+  font-weight: bold;
 }
 
 .logout-btn:hover {
-  background: #cc0000;
+  background: linear-gradient(45deg, #ff3b3b, #d80000);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255,0,0,0.45);
 }
 
-/* ✅ Dropdown Animation */
+/* ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
