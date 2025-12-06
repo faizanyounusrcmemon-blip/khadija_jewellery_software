@@ -113,6 +113,12 @@ export default function Navbar({ onNavigate }) {
                 </button>
               )}
 
+              {can("memory_status") && (
+                <button onClick={() => onNavigate("memory-status")}>
+                 📊 Memory Status
+                </button>
+              )}
+
             </div>
           )}
         </div>
