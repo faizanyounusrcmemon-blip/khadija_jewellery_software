@@ -1,5 +1,5 @@
 // =====================================================
-//   SNAPSHOT REPORT (Professional UI Version)
+//   SNAPSHOT REPORT (Slim Buttons Matching Your UI)
 // =====================================================
 
 import React, { useState } from "react";
@@ -17,10 +17,7 @@ export default function SnapshotReport({ onNavigate }) {
   // 🔍 PREVIEW STOCK
   // ---------------------------------------------------
   async function previewStock() {
-    if (!endDate) {
-      setMessage("⚠ Please select END DATE.");
-      return;
-    }
+    if (!endDate) return setMessage("⚠ Please select END DATE.");
 
     setLoading(true);
     setMessage("");
@@ -33,14 +30,9 @@ export default function SnapshotReport({ onNavigate }) {
       });
 
       const data = await res.json();
-
-      if (!data.success) {
-        setMessage("❌ " + data.error);
-      } else {
-        setPreviewData(data.rows);
-        setMessage("");
-      }
-    } catch (err) {
+      if (!data.success) setMessage("❌ " + data.error);
+      else setPreviewData(data.rows);
+    } catch {
       setMessage("❌ Preview request failed.");
     }
 
@@ -54,10 +46,7 @@ export default function SnapshotReport({ onNavigate }) {
     const password = prompt("Enter password:");
     if (!password) return;
 
-    if (!endDate) {
-      setMessage("⚠ Please select END DATE.");
-      return;
-    }
+    if (!endDate) return setMessage("⚠ Please select END DATE.");
 
     setLoading(true);
     setMessage("");
@@ -74,116 +63,98 @@ export default function SnapshotReport({ onNavigate }) {
       });
 
       const data = await res.json();
-
-      if (data.success) {
+      if (data.success)
         setMessage(`✅ Snapshot Created Successfully! Rows: ${data.inserted}`);
-      } else {
-        setMessage("❌ " + data.error);
-      }
-    } catch (err) {
+      else setMessage("❌ " + data.error);
+    } catch {
       setMessage("❌ Snapshot request failed.");
     }
 
-  setLoading(false);
+    setLoading(false);
   }
 
-  // ====================================================
-  // UI (Beautiful + Professional ERP Look)
-  // ====================================================
+  // BUTTON STYLES — EXACT MATCHING YOUR SCREENSHOT
+  const btnPreview = {
+    background: "#f4c542",
+    color: "black",
+    padding: "4px 16px",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: "600",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+  };
+
+  const btnSave = {
+    background: "#28c76f",
+    color: "black",
+    padding: "4px 16px",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: "600",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+  };
+
+  const btnExit = {
+    background: "#ff9f43",
+    color: "white",
+    padding: "6px 14px",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: "bold",
+    fontSize: "14px",
+    marginBottom: "10px",
+  };
+
   return (
-    <div className="container-fluid text-light py-3" style={{ fontFamily: "Inter", maxWidth: "950px" }}>
+    <div className="container-fluid text-light py-3" style={{ maxWidth: "950px" }}>
       
       {/* EXIT BUTTON */}
-      <button
-        onClick={() => onNavigate("dashboard")}
-        style={{
-          padding: "8px 18px",
-          border: "none",
-          borderRadius: "8px",
-          fontWeight: "bold",
-          fontSize: "14px",
-          background: "linear-gradient(90deg, #ffb400, #ff6a00)",
-          color: "#fff",
-          boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
-          cursor: "pointer",
-          marginBottom: "12px",
-        }}
-      >
-        ⬅ Exit
-      </button>
+      <button style={btnExit} onClick={() => onNavigate("dashboard")}>⬅ Exit</button>
 
-      {/* HEADING */}
-      <h2 className="fw-bold mb-3" style={{ color: "#ffcc00", fontSize: "26px" }}>
+      <h2 className="fw-bold mb-3" style={{ color: "#ffcc00" }}>
         📦 Create Stock Snapshot
       </h2>
 
-      {/* FILTER CARD */}
-      <div
-        className="card bg-dark border-secondary shadow mb-3"
-        style={{ borderRadius: "12px", padding: "15px" }}
-      >
-        <div className="row g-3">
+      {/* CARD */}
+      <div className="card bg-dark border-secondary p-3" style={{ borderRadius: "12px" }}>
+        
+        <div className="row g-2">
 
-          {/* FROM DATE */}
           <div className="col-md-3">
-            <label className="fw-bold">From Date (optional)</label>
+            <label className="fw-bold">From Date</label>
             <input
               type="date"
               className="form-control form-control-sm"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                background: "#fff",
-                color: "#000",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
             />
           </div>
 
-          {/* END DATE */}
           <div className="col-md-3">
-            <label className="fw-bold">Snapshot Date</label>
+            <label className="fw-bold">To Date</label>
             <input
               type="date"
               className="form-control form-control-sm"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                background: "#fff",
-                color: "#000",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
             />
           </div>
 
-          {/* BUTTONS */}
+          {/* BUTTONS EXACT STYLE */}
           <div className="col-md-6 d-flex align-items-end gap-2">
-
-            <button
-              className="btn btn-warning fw-bold w-50"
-              onClick={previewStock}
-              disabled={loading}
-              style={{
-                color: "#000",
-                borderRadius: "8px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-              }}
-            >
-              🔍 {loading ? "Loading..." : "Preview"}
+            
+            <button style={btnPreview} onClick={previewStock} disabled={loading}>
+              🔍 {loading ? "..." : "Preview"}
             </button>
 
-            <button
-              className="btn btn-success fw-bold w-50"
-              onClick={createSnapshot}
-              disabled={loading}
-              style={{
-                borderRadius: "8px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-              }}
-            >
-              📥 {loading ? "Saving..." : "Save Snapshot"}
+            <button style={btnSave} onClick={createSnapshot} disabled={loading}>
+              💾 {loading ? "..." : "Save"}
             </button>
 
           </div>
@@ -192,56 +163,38 @@ export default function SnapshotReport({ onNavigate }) {
 
       {/* MESSAGE */}
       {message && (
-        <div
-          className="alert alert-dark shadow-sm"
-          style={{ borderRadius: "8px", fontWeight: "bold" }}
-        >
-          {message}
-        </div>
+        <div className="alert alert-dark mt-2">{message}</div>
       )}
 
       {/* PREVIEW TABLE */}
       {previewData.length > 0 && (
-        <div className="mt-3 card bg-dark border-secondary shadow"
-          style={{ borderRadius: "12px", padding: "15px" }}>
-          
+        <div className="card bg-dark border-secondary mt-3 p-3" style={{ borderRadius: "12px" }}>
           <h4 style={{ color: "#ffcc00" }}>📊 Stock Preview</h4>
 
-          <div className="table-responsive mt-2" style={{ maxHeight: "70vh" }}>
-            <table className="table table-dark table-bordered table-sm">
-              <thead
-                style={{
-                  background: "#333",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 5,
-                  color: "#ffcc00",
-                }}
-              >
-                <tr>
-                  <th>Barcode</th>
-                  <th>Item</th>
-                  <th className="text-end">Stock</th>
+          <table className="table table-dark table-bordered table-sm mt-2">
+            <thead style={{ background: "#333", color: "#ffcc00" }}>
+              <tr>
+                <th>Barcode</th>
+                <th>Item</th>
+                <th className="text-end">Stock</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {previewData.map((row, i) => (
+                <tr key={i}>
+                  <td>{row.barcode}</td>
+                  <td>{row.item_name}</td>
+                  <td className="text-end" style={{ color: "#00ff66", fontWeight: "bold" }}>
+                    {row.stock_qty}
+                  </td>
                 </tr>
-              </thead>
+              ))}
+            </tbody>
 
-              <tbody>
-                {previewData.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.barcode}</td>
-                    <td>{row.item_name}</td>
-                    <td className="text-end" style={{ fontWeight: "bold", color: "#00ff66" }}>
-                      {row.stock_qty}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-
-            </table>
-          </div>
+          </table>
         </div>
       )}
-
     </div>
   );
 }

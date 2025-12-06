@@ -19,6 +19,10 @@ export default function SnapshotHistory({ onNavigate }) {
     if (data.success) setRows(data.rows || []);
   }
 
+  // 🟡 Helper: remove time (show only yyyy-mm-dd)
+  const toDateOnly = (val) =>
+    val ? String(val).slice(0, 10) : "-";
+
   return (
     <div
       className="container-fluid text-light py-3"
@@ -44,7 +48,10 @@ export default function SnapshotHistory({ onNavigate }) {
       </button>
 
       {/* HEADING */}
-      <h2 className="fw-bold mb-3" style={{ color: "#ffcc00", fontSize: "26px" }}>
+      <h2
+        className="fw-bold mb-3"
+        style={{ color: "#ffcc00", fontSize: "26px" }}
+      >
         📜 Snapshot History
       </h2>
 
@@ -88,14 +95,17 @@ export default function SnapshotHistory({ onNavigate }) {
               {rows.map((r) => (
                 <tr key={r.id}>
                   <td>{r.id}</td>
-                  <td>{r.from_date || "-"}</td>
-                  <td>{r.to_date}</td>
+                  <td>{toDateOnly(r.from_date)}</td>
+                  <td>{toDateOnly(r.to_date)}</td>
+
                   <td
                     className="text-end"
                     style={{ fontWeight: "bold", color: "#00ff66" }}
                   >
                     {r.items_inserted}
                   </td>
+
+                  {/* Created at → readable but still with time */}
                   <td>{new Date(r.created_at).toLocaleString()}</td>
                 </tr>
               ))}

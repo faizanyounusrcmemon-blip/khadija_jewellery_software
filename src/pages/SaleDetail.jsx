@@ -1,4 +1,4 @@
-// --- FINAL SaleDetail.jsx (RETURN + NET + EXIT BUTTON) ---
+// --- BEAUTIFUL SaleDetail.jsx (Borders + Exit Button + Premium UI) ---
 
 import React, { useState, useEffect } from "react";
 import supabase from "../utils/supabaseClient";
@@ -11,27 +11,24 @@ export default function SaleDetail({ onNavigate }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // 🔹 Load sales + return amounts
+  // ⭐ Load Sales & Returns
   useEffect(() => {
     const loadAll = async () => {
-      // 1️⃣ Load Sales
       const { data: salesData } = await supabase
         .from("sales")
         .select("*")
         .eq("is_deleted", false);
 
-      // 2️⃣ Load Returns
       const { data: returnData } = await supabase
         .from("sale_returns")
         .select("invoice_no, amount");
 
-      // Group return amount per invoice
       const returnMap = {};
       returnData?.forEach((r) => {
-        returnMap[r.invoice_no] = (returnMap[r.invoice_no] || 0) + Number(r.amount || 0);
+        returnMap[r.invoice_no] =
+          (returnMap[r.invoice_no] || 0) + Number(r.amount || 0);
       });
 
-      // Merge into sales
       const merged = salesData?.map((s) => ({
         ...s,
         return_amount: returnMap[s.invoice_no] || 0,
@@ -44,7 +41,7 @@ export default function SaleDetail({ onNavigate }) {
     loadAll();
   }, []);
 
-  // 🔹 Filter Logic
+  // ⭐ Filters
   useEffect(() => {
     let result = [...sales];
 
@@ -70,7 +67,7 @@ export default function SaleDetail({ onNavigate }) {
     setFiltered(result);
   }, [search, invoiceSearch, fromDate, toDate, sales]);
 
-  // 🔹 Group rows by invoice
+  // ⭐ Group by invoice
   const groupedInvoices = Object.values(
     filtered.reduce((acc, s) => {
       if (!acc[s.invoice_no]) {
@@ -85,13 +82,11 @@ export default function SaleDetail({ onNavigate }) {
     }, {})
   );
 
-  // 🔹 Edit Invoice
   const handleEdit = (invoiceNo) => {
     localStorage.setItem("edit_invoice", invoiceNo);
     onNavigate("invoice-edit");
   };
 
-  // 🔹 Delete Invoice
   const handleDelete = async (invoiceNo) => {
     if (!confirm("Delete invoice?")) return;
 
@@ -104,93 +99,160 @@ export default function SaleDetail({ onNavigate }) {
     window.location.reload();
   };
 
-  // 🔹 EXIT Button
   const handleExit = () => {
-    if (typeof onNavigate === "function") onNavigate("dashboard");
-    else window.history.back();
+    if (onNavigate) onNavigate("dashboard");
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-3">Sales Detail</h2>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <input
-          placeholder="Search Customer"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded"
-        />
-
-        <input
-          placeholder="Search Invoice"
-          value={invoiceSearch}
-          onChange={(e) => setInvoiceSearch(e.target.value)}
-          className="border p-2 rounded"
-        />
-
-        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="border p-2 rounded" />
-        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border p-2 rounded" />
-      </div>
-
-      {/* Table */}
-      <table className="w-full border">
-        <thead className="bg-gray-100">
-          <tr>
-            <th>Invoice</th>
-            <th>Date</th>
-            <th>Customer</th>
-            <th>Total Sale</th>
-            <th>Return</th>
-            <th>Net Amount</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {groupedInvoices.map((inv) => (
-            <tr key={inv.invoice_no}>
-              <td>{inv.invoice_no}</td>
-              <td>{inv.sale_date}</td>
-              <td>{inv.customer_name}</td>
-
-              <td>{inv.total_amount.toFixed(2)}</td>
-
-              <td style={{ color: "red" }}>
-                {inv.return_amount.toFixed(2)}
-              </td>
-
-              <td style={{ color: "green", fontWeight: "bold" }}>
-                {(inv.total_amount - inv.return_amount).toFixed(2)}
-              </td>
-
-              <td className="flex gap-1">
-                <button
-                  onClick={() => handleEdit(inv.invoice_no)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleDelete(inv.invoice_no)}
-                  className="bg-red-600 text-white px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
+    <div className="container-fluid py-3 text-light" style={{ fontFamily: "Inter" }}>
+      
+      {/* EXIT BUTTON */}
       <button
         onClick={handleExit}
-        className="mt-4 bg-red-600 text-white px-4 py-2 rounded"
+        style={{
+          padding: "8px 18px",
+          border: "none",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          fontSize: "14px",
+          background: "linear-gradient(90deg, #ffb400, #ff6a00)",
+          color: "#fff",
+          boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
+          cursor: "pointer",
+          marginBottom: "12px",
+        }}
       >
-        Exit
+        ⬅ Exit
       </button>
+
+      <h2 className="fw-bold mb-3" style={{ color: "#ffcc00", fontSize: "26px" }}>
+        🧾 Sales Invoice Detail
+      </h2>
+
+      {/* FILTER CARD */}
+      <div
+        className="card bg-dark border-secondary shadow mb-3"
+        style={{ borderRadius: "12px" }}
+      >
+        <div className="card-body">
+          <div className="row g-2">
+            <div className="col-md-3">
+              <input
+                placeholder="Search Customer"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="form-control form-control-sm bg-black text-light border-secondary"
+              />
+            </div>
+
+            <div className="col-md-3">
+              <input
+                placeholder="Search Invoice"
+                value={invoiceSearch}
+                onChange={(e) => setInvoiceSearch(e.target.value)}
+                className="form-control form-control-sm bg-black text-light border-secondary"
+              />
+            </div>
+
+            <div className="col-md-2">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="form-control form-control-sm bg-black text-light border-secondary"
+              />
+            </div>
+
+            <div className="col-md-2">
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="form-control form-control-sm bg-black text-light border-secondary"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE CARD */}
+      <div
+        className="card bg-dark border-secondary shadow"
+        style={{ borderRadius: "12px" }}
+      >
+        <div className="card-body p-2">
+          <div className="table-responsive" style={{ maxHeight: "70vh" }}>
+            <table
+              className="table table-dark table-bordered table-sm mb-0"
+              style={{ borderColor: "#555" }}
+            >
+              <thead
+                style={{
+                  background: "#2b2b2b",
+                  color: "#ffcc00",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 5,
+                }}
+              >
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th className="text-end">Total Sale</th>
+                  <th className="text-end">Return</th>
+                  <th className="text-end">Net</th>
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {groupedInvoices.map((inv) => (
+                  <tr key={inv.invoice_no} className="table-row">
+                    <td>{inv.invoice_no}</td>
+                    <td>{inv.sale_date}</td>
+                    <td>{inv.customer_name}</td>
+
+                    <td className="text-end">{inv.total_amount.toFixed(2)}</td>
+
+                    <td className="text-end" style={{ color: "red" }}>
+                      {inv.return_amount.toFixed(2)}
+                    </td>
+
+                    <td className="text-end" style={{ color: "#4cff8f", fontWeight: "bold" }}>
+                      {(inv.total_amount - inv.return_amount).toFixed(2)}
+                    </td>
+
+                    <td className="text-center">
+                      <button
+                        onClick={() => handleEdit(inv.invoice_no)}
+                        className="btn btn-sm btn-primary me-1"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(inv.invoice_no)}
+                        className="btn btn-sm btn-danger"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {groupedInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="text-center text-muted py-3">
+                      No records found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
