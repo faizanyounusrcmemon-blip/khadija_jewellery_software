@@ -1,144 +1,111 @@
-// ===============================================
-//   STOCK REPORT (Professional UI Version)
-// ===============================================
+// =====================================================================
+// STOCK REPORT (Snapshot + Purchases + Sales + Returns)
+// =====================================================================
+app.get("/api/stock-report", async (req, res) => {
+  try {
+    // 1) Last Snapshot Date
+    const lastSnapRes = await pg.query(`
+      SELECT snap_date 
+      FROM stock_snapshots
+      ORDER BY snap_date DESC
+      LIMIT 1
+    `);
 
-import React, { useEffect, useState } from "react";
+    let baseDate = "1900-01-01";
+    if (lastSnapRes.rows.length > 0) baseDate = lastSnapRes.rows[0].snap_date;
 
-export default function StockReport({ onNavigate }) {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+    // 2) Load ALL item names (MAIN FIX 🔥)
+    const itemRes = await pg.query(`
+      SELECT barcode::text, item_name 
+      FROM items
+    `);
 
-  const API = import.meta.env.VITE_BACKEND_URL;
+    let itemNameMap = {};
+    itemRes.rows.forEach((r) => {
+      itemNameMap[r.barcode] = r.item_name;
+    });
 
-  async function loadStock() {
-    setLoading(true);
+    // 3) Base Snapshot Stock
+    const base = await pg.query(`
+      SELECT barcode::text, SUM(stock_qty) AS qty
+      FROM stock_snapshots
+      WHERE snap_date = $1
+      GROUP BY barcode::text
+    `, [baseDate]);
 
-    try {
-      const res = await fetch(`${API}/api/stock-report`);
-      const data = await res.json();
+    let map = {};
 
-      if (!data.success) {
-        alert("❌ Error loading stock: " + data.error);
-      } else {
-        setRows(data.rows);
+    base.rows.forEach((r) => {
+      map[r.barcode] = {
+        barcode: r.barcode,
+        item_name: itemNameMap[r.barcode] || "Unknown Item",
+        stock_qty: Number(r.qty),
+      };
+    });
+
+    // 4) Purchases
+    const pur = await pg.query(`
+      SELECT barcode::text, SUM(qty) AS qty
+      FROM purchases
+      WHERE is_deleted = false AND purchase_date > $1
+      GROUP BY barcode::text
+    `, [baseDate]);
+
+    pur.rows.forEach((r) => {
+      if (!map[r.barcode]) {
+        map[r.barcode] = {
+          barcode: r.barcode,
+          item_name: itemNameMap[r.barcode] || "Unknown Item",
+          stock_qty: 0,
+        };
       }
-    } catch (err) {
-      alert("❌ Request failed");
-    }
+      map[r.barcode].stock_qty += Number(r.qty);
+    });
 
-    setLoading(false);
+    // 5) Sales
+    const sal = await pg.query(`
+      SELECT barcode::text, SUM(qty) AS qty
+      FROM sales
+      WHERE is_deleted = false AND sale_date > $1
+      GROUP BY barcode::text
+    `, [baseDate]);
+
+    sal.rows.forEach((r) => {
+      if (!map[r.barcode]) {
+        map[r.barcode] = {
+          barcode: r.barcode,
+          item_name: itemNameMap[r.barcode] || "Unknown Item",
+          stock_qty: 0,
+        };
+      }
+      map[r.barcode].stock_qty -= Number(r.qty);
+    });
+
+    // 6) Returns
+    const ret = await pg.query(`
+      SELECT barcode::text, SUM(return_qty) AS qty
+      FROM sale_returns
+      WHERE created_at::date > $1
+      GROUP BY barcode::text
+    `, [baseDate]);
+
+    ret.rows.forEach((r) => {
+      if (!map[r.barcode]) {
+        map[r.barcode] = {
+          barcode: r.barcode,
+          item_name: itemNameMap[r.barcode] || "Unknown Item",
+          stock_qty: 0,
+        };
+      }
+      map[r.barcode].stock_qty += Number(r.qty);
+    });
+
+    // 7) Remove zero stock
+    const final = Object.values(map).filter((r) => r.stock_qty !== 0);
+
+    res.json({ success: true, rows: final });
+
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
-
-  useEffect(() => {
-    loadStock();
-  }, []);
-
-  return (
-    <div className="container-fluid text-light py-3" style={{ fontFamily: "Inter" }}>
-      
-      {/* EXIT BUTTON */}
-      <button
-        onClick={() => onNavigate("dashboard")}
-        style={{
-          padding: "8px 18px",
-          border: "none",
-          borderRadius: "8px",
-          fontWeight: "bold",
-          fontSize: "14px",
-          background: "linear-gradient(90deg, #ffb400, #ff6a00)",
-          color: "#fff",
-          boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
-          cursor: "pointer",
-          marginBottom: "12px",
-        }}
-      >
-        ⬅ Exit
-      </button>
-
-      {/* TITLE + REFRESH BUTTON */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 style={{ color: "#ffca57", fontSize: "26px" }}>
-          📦 Stock Report
-        </h2>
-
-        <button
-          onClick={loadStock}
-          disabled={loading}
-          style={{
-            padding: "7px 16px",
-            border: "none",
-            borderRadius: "8px",
-            fontWeight: "bold",
-            background: "#0bd46e",
-            color: "#000",
-            boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
-            cursor: "pointer",
-          }}
-        >
-          🔄 {loading ? "Loading..." : "Refresh"}
-        </button>
-      </div>
-
-      {/* DATA CARD */}
-      <div
-        className="card bg-dark border-secondary"
-        style={{
-          borderRadius: "10px",
-          boxShadow: "0 0 12px rgba(0,0,0,0.4)",
-        }}
-      >
-        <div className="card-body p-2">
-
-          {rows.length > 0 ? (
-            <div className="table-responsive" style={{ maxHeight: "75vh" }}>
-              <table
-                className="table table-dark table-bordered table-sm mb-0"
-                style={{ borderColor: "#555" }}
-              >
-                <thead
-                  style={{
-                    position: "sticky",
-                    top: 0,
-                    background: "#2b2b2b",
-                    color: "#ffca57",
-                    zIndex: 5,
-                  }}
-                >
-                  <tr>
-                    <th style={{ width: "140px" }}>Barcode</th>
-                    <th>Item Name</th>
-                    <th className="text-end" style={{ width: "120px" }}>Stock Qty</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i}>
-                      <td>{r.barcode}</td>
-                      <td>{r.item_name}</td>
-                      <td
-                        className="text-end"
-                        style={{
-                          fontWeight: "bold",
-                          color: r.stock_qty > 0 ? "#00ff66" : "#ff5555",
-                        }}
-                      >
-                        {r.stock_qty}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            !loading && (
-              <p className="text-warning text-center py-3">
-                No stock available.
-              </p>
-            )
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+});
