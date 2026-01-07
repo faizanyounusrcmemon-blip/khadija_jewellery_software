@@ -1,205 +1,244 @@
-import React, { useState } from "react";
-import "./Navbar.css";
+import React, { useState, useEffect, useRef } from "react";
 
-export default function Navbar({ onNavigate }) {
+export default function Navbar({ onNavigate = () => {} }) {
   const [openMenu, setOpenMenu] = useState(null);
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const navRef = useRef(null);
 
-  const can = (perm) => user?.role === "admin" || user?.[perm] === true;
+  const user = JSON.parse(sessionStorage.getItem("user")) || {};
+
+  const can = (perm) =>
+    user?.role === "admin" || user?.[perm] === true;
+
+  // 🔹 Outside click close
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleMenu = (name) => {
+    setOpenMenu((prev) => (prev === name ? null : name));
+  };
+
+  const handleNavigate = (route) => {
+    setOpenMenu(null);
+    onNavigate(route);
+  };
 
   return (
-    <div className="topbar">
-      <div className="nav-left">
-
-        <div className="brand">💎 KHADIJA JEWELLERY</div>
-
-        {/* SALES */}
+    <div
+      ref={navRef}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "#1a1a2e",
+        padding: "10px 20px",
+        color: "#fff",
+        fontFamily: "Inter, sans-serif",
+        flexWrap: "wrap",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+      }}
+    >
+      {/* LEFT MENUS */}
+      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+        {/* BRAND */}
         <div
-          className="menu"
-          onMouseEnter={() => setOpenMenu("sales")}
-          onMouseLeave={() => setOpenMenu(null)}
+          style={{
+            fontWeight: "bold",
+            fontSize: 18,
+            cursor: "pointer",
+            marginRight: 20,
+            padding: "4px 8px",
+            borderRadius: 6,
+            background: "linear-gradient(90deg,#ff6a00,#ffb400)",
+            color: "#fff",
+            boxShadow: "0 2px 6px rgba(255,180,0,0.5)",
+            userSelect: "none",
+          }}
+          onClick={() => handleNavigate("dashboard")}
         >
-          <button className="menu-btn">🛒 Sales</button>
-
-          {openMenu === "sales" && (
-            <div className="menu-list">
-              {can("sale_entry") && <button onClick={() => onNavigate("sale-entry")}>Sale Entry</button>}
-              {can("sale_return") && <button onClick={() => onNavigate("sale-return")}>Sale Return</button>}
-              {can("sale_return_detail") && <button onClick={() => onNavigate("sale-return-detail")}>Sale Return detail</button>}
-              {can("sale_detail") && <button onClick={() => onNavigate("sale-detail")}>Sale Detail</button>}
-              {can("sale_item_detail") && (
-                <button onClick={() => onNavigate("sale-item-detail")}>Sale Item Detail</button>
-              )}
-            </div>
-          )}
+          💎 KHADIJA JEWELLERY 💎
         </div>
 
-        {/* PURCHASE */}
-        <div
-          className="menu"
-          onMouseEnter={() => setOpenMenu("purchase")}
-          onMouseLeave={() => setOpenMenu(null)}
-        >
-          <button className="menu-btn">📦 Purchase</button>
+        {/* MENU COMPONENT */}
+        {[
+          {
+            key: "sales",
+            label: "🛒 Sales",
+            items: [
+              { perm: "sale_entry", label: "Sale Entry", route: "sale-entry" },
+              { perm: "sale_return", label: "Sale Return", route: "sale-return" },
+              { perm: "sale_return_detail", label: "Sale Return Detail", route: "sale-return-detail" },
+              { perm: "sale_detail", label: "Sale Detail", route: "sale-detail" },
+              { perm: "sale_item_detail", label: "Sale Item Detail", route: "sale-item-detail" },
+            ],
+          },
+          {
+            key: "purchase",
+            label: "📦 Purchase",
+            items: [
+              { perm: "purchase_entry", label: "Purchase Entry", route: "purchase-entry" },
+              { perm: "purchase_return", label: "Purchase Return", route: "purchase-return" },
+              { perm: "purchase_detail", label: "Purchase Detail", route: "purchase-detail" },
+              { perm: "purchase_item_detail", label: "Purchase Item Detail", route: "purchase-item-detail" },
+            ],
+          },
+          {
+            key: "master",
+            label: "📇 Master",
+            items: [
+              { perm: "item_profile", label: "Item Profile", route: "item-profile" },
+              { perm: "customer_profile", label: "Customer Profile", route: "customer-profile" },
+              { perm: "manage_users", label: "Manage Users", route: "manage-users" },
+              { perm: "create_user", label: "➕ Create User", route: "create-user" },
+            ],
+          },
+          {
+            key: "openingStock",
+            label: "🧊 Opening Stock",
+            items: [
+              { perm: "opening_stock_generate", label: "📦 Archive & Opening Stock", route: "archive-stock" },
+              { perm: "opening_stock_generate", label: "📸 Snapshot Report", route: "snapshot-report" },
+              { perm: "opening_stock_generate", label: "📸 Snapshot History", route: "snapshot-history" },
+              { perm: "memory_status", label: "📊 Memory Status", route: "memory-status" },
+            ],
+          },
+          {
+            key: "reports",
+            label: "📊 Reports",
+            items: [
+              { perm: "stock_report", label: "Stock Report", route: "stock-report" },
+              { perm: "stock_ledger", label: "Stock Ledger", route: "stock-ledger" },
+              { perm: "sale_report", label: "Sales Profit Report", route: "sale-report" },
+              { perm: "monthly_report", label: "Monthly Graph Report", route: "monthly-report" },
+              { perm: "month_wise_summary", label: "📦 Month Wise Summary", route: "month-wise-summary" },
+              { perm: "day_wise_sale_report", label: "📅 Day Wise Sale Report", route: "day-wise-sale-report" },
+              { perm: "Rate_Difference_report", label: "Rate Difference Report", route: "rate-difference-report" },
+              { perm: "deleted_invoice_report", label: "🗑 Deleted Invoice Report", route: "deleted-invoice-report" },
+              { perm: "purchase_delete_report", label: "🗑 Deleted Purchase Report", route: "purchase-delete-report" },
+            ],
+          },
+        ].map((menu) => (
+          <div key={menu.key} style={{ position: "relative", marginRight: 10 }}>
+            <button
+              style={{
+                padding: "6px 14px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                background: openMenu === menu.key ? "#ffb400" : "#222",
+                color: openMenu === menu.key ? "#000" : "#fff",
+                transition: "0.3s all",
+              }}
+              onClick={() => toggleMenu(menu.key)}
+            >
+              {menu.label}
+            </button>
 
-          {openMenu === "purchase" && (
-            <div className="menu-list">
-              {can("purchase_entry") && <button onClick={() => onNavigate("purchase-entry")}>Purchase Entry</button>}
-              {can("purchase_return") && <button onClick={() => onNavigate("purchase-return")}>Purchase Return</button>}
-              {can("purchase_detail") && <button onClick={() => onNavigate("purchase-detail")}>Purchase Detail</button>}
-              {can("purchase_item_detail") && (
-                <button onClick={() => onNavigate("purchase-item-detail")}>Purchase Item Detail</button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* MASTER */}
-        <div
-          className="menu"
-          onMouseEnter={() => setOpenMenu("master")}
-          onMouseLeave={() => setOpenMenu(null)}
-        >
-          <button className="menu-btn">📇 Master</button>
-
-          {openMenu === "master" && (
-            <div className="menu-list">
-              {can("item_profile") && (
-                <button onClick={() => onNavigate("item-profile")}>Item Profile</button>
-              )}
-
-              {can("customer_profile") && (
-                <button onClick={() => onNavigate("customer-profile")}>Customer Profile</button>
-              )}
-
-              {can("manage_users") && (
-                <button onClick={() => onNavigate("manage-users")}>Manage Users</button>
-              )}
-
-              {can("create_user") && (
-                <button onClick={() => onNavigate("create-user")}>➕ Create User</button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* OPENING STOCK MENU (Updated with SnapshotReport) */}
-        <div
-          className="menu"
-          onMouseEnter={() => setOpenMenu("openingStock")}
-          onMouseLeave={() => setOpenMenu(null)}
-        >
-          <button className="menu-btn">🧊 Opening Stock</button>
-
-          {openMenu === "openingStock" && (
-            <div className="menu-list">
-
-              {can("opening_stock_generate") && (
-                <button onClick={() => onNavigate("archive-stock")}>
-                  📦 Archive & Opening Stock
-                </button>
-              )}
-
-              {/* ⭐ NEW: SnapshotReport added */}
-              {can("opening_stock_generate") && (
-                <button onClick={() => onNavigate("snapshot-report")}>
-                  📸 Snapshot Report
-                </button>
-              )}
-
-              {can("opening_stock_generate") && (
-                <button onClick={() => onNavigate("snapshot-history")}>
-                  📸 Snapshot History
-                </button>
-              )}
-
-              {can("memory_status") && (
-                <button onClick={() => onNavigate("memory-status")}>
-                 📊 Memory Status
-                </button>
-              )}
-
-            </div>
-          )}
-        </div>
-
-        {/* REPORTS */}
-        <div
-          className="menu"
-          onMouseEnter={() => setOpenMenu("reports")}
-          onMouseLeave={() => setOpenMenu(null)}
-        >
-          <button className="menu-btn">📊 Reports</button>
-
-          {openMenu === "reports" && (
-            <div className="menu-list">
-              {can("stock_report") && (
-                <button onClick={() => onNavigate("stock-report")}>Stock Report</button>
-              )}
-
-              {can("stock_ledger") && (
-                <button onClick={() => onNavigate("stock-ledger")}>Stock Ledger</button>
-              )}
-
-              {can("sale_report") && (
-                <button onClick={() => onNavigate("sale-report")}>Sales Profit Report</button>
-              )}
-
-              {can("monthly_report") && (
-                <button onClick={() => onNavigate("monthly-report")}>Monthly Graph Report</button>
-              )}
-
-              {can("month_wise_summary") && (
-                <button onClick={() => onNavigate("month-wise-summary")}>
-                  📦 Month Wise Summary
-                </button>
-              )}
-
-              {can("day_wise_sale_report") && (
-                <button onClick={() => onNavigate("day-wise-sale-report")}>
-                  📅 Day Wise Sale Report
-                </button>
-              )}
-
-              {can("Rate_Difference_report") && (
-                <button onClick={() => onNavigate("rate-difference-report")}>
-                  Rate Difference report
-                </button>
-              )}
-
-              {can("deleted_invoice_report") && (
-                <button onClick={() => onNavigate("deleted-invoice-report")}>
-                  🗑 Deleted Invoice Report
-                </button>
-              )}
-
-              {can("purchase_delete_report") && (
-                <button onClick={() => onNavigate("purchase-delete-report")}>
-                  🗑 Deleted Purchase Report
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+            {openMenu === menu.key && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  background: "#222",
+                  borderRadius: 6,
+                  padding: 8,
+                  minWidth: 180,
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.6)",
+                  zIndex: 100,
+                  animation: "fadeIn 0.2s ease",
+                }}
+              >
+                {menu.items
+                  .filter((i) => can(i.perm))
+                  .map((i) => (
+                    <button
+                      key={i.route}
+                      onClick={() => handleNavigate(i.route)}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "6px 10px",
+                        margin: "2px 0",
+                        borderRadius: 4,
+                        background: "#111",
+                        color: "#ffd966",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontWeight: "500",
+                        transition: "0.2s all",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#ffb400"; // Hover bg
+                        e.currentTarget.style.color = "#000";         // Hover font
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#111";    // Reset bg
+                        e.currentTarget.style.color = "#ffd966";     // Reset font
+                      }}
+                    >
+                      {i.label}
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* RIGHT SIDE BUTTONS */}
-      <div className="right-actions">
-
+      {/* RIGHT ACTIONS */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
-          className="logout-btn"
-          style={{ marginRight: "10px", background: "#6f42c1" }}
-          onClick={() => onNavigate("restore")}
+          style={{
+            padding: "6px 14px",
+            borderRadius: 6,
+            border: "none",
+            fontWeight: "bold",
+            cursor: "pointer",
+            background: "linear-gradient(90deg,#6f42c1,#a866f9)",
+            color: "#fff",
+            boxShadow: "0 3px 8px rgba(0,0,0,0.5)",
+          }}
+          onClick={() => handleNavigate("restore")}
         >
           🔄 Restore
         </button>
 
-        <div className="status">
-          🟢 {user?.username} ({user?.role})
+        <div
+          style={{
+            padding: "6px 12px",
+            borderRadius: 6,
+            background: "#333",
+            fontWeight: "bold",
+            color: "#0bd46e",
+          }}
+        >
+          🟢 {user?.username || "User"} ({user?.role || "guest"})
         </div>
 
         <button
-          className="logout-btn"
+          style={{
+            padding: "6px 14px",
+            borderRadius: 6,
+            border: "none",
+            fontWeight: "bold",
+            cursor: "pointer",
+            background: "linear-gradient(90deg,#ff6a00,#ffb400)",
+            color: "#000",
+            boxShadow: "0 3px 8px rgba(0,0,0,0.5)",
+          }}
           onClick={() => {
             sessionStorage.clear();
             localStorage.clear();
