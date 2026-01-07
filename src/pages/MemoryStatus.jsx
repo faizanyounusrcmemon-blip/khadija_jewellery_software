@@ -11,10 +11,10 @@ export default function MemoryStatus({ onNavigate }) {
     const { data: result, error } = await supabase.rpc("get_memory_status");
 
     if (error) {
-      console.error(error);
+      console.error("RPC Error:", error);
       setData(null);
     } else {
-      setData(result[0]);
+      setData(result?.[0] || null);
     }
 
     setLoading(false);
@@ -25,47 +25,27 @@ export default function MemoryStatus({ onNavigate }) {
   }, []);
 
   return (
-    <div
-      className="container-fluid py-3"
-      style={{ fontFamily: "Inter", color: "#fff" }}
-    >
-      {/* EXIT BUTTON */}
+    <div className="container-fluid py-3 text-white">
       <button
         onClick={() => onNavigate("dashboard")}
-        style={{
-          padding: "8px 18px",
-          border: "none",
-          borderRadius: "8px",
-          fontWeight: "bold",
-          fontSize: "14px",
-          background: "linear-gradient(90deg, #ffb400, #ff6a00)",
-          color: "#fff",
-          boxShadow: "0 3px 10px rgba(0,0,0,0.6)",
-          cursor: "pointer",
-          marginBottom: "15px",
-        }}
+        className="btn btn-warning fw-bold mb-3"
       >
         ⬅ Exit
       </button>
 
-      <h2 className="fw-bold" style={{ color: "#ffcc00" }}>
-        📊 Supabase Memory Status
+      <h2 className="fw-bold text-warning">
+        📊 Supabase Database Memory (500 MB)
       </h2>
 
-      <div
-        className="card bg-dark border-secondary shadow mt-3"
-        style={{ borderRadius: "14px", padding: "16px" }}
-      >
+      <div className="card bg-dark border-warning shadow mt-3 p-3">
         {loading ? (
-          <p className="text-warning">Loading memory status...</p>
+          <p className="text-info">Loading memory status...</p>
         ) : data ? (
           <>
-            <h4 style={{ color: "#4cff8f" }}>Database Usage</h4>
-
             <table className="table table-dark table-bordered mt-3">
               <tbody>
                 <tr>
-                  <th style={{ width: "200px" }}>Used Space</th>
+                  <th style={{ width: "240px" }}>Used Space</th>
                   <td>{data.used}</td>
                 </tr>
 
@@ -75,21 +55,37 @@ export default function MemoryStatus({ onNavigate }) {
                 </tr>
 
                 <tr>
-                  <th>Approx Remaining Rows</th>
-                  <td>{data.approx_remaining_rows}</td>
+                  <th>Total Rows (All Tables)</th>
+                  <td className="text-info fw-bold">
+                    {Number(data.total_rows).toLocaleString()}
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>Average Size per Row</th>
+                  <td className="text-warning fw-bold">
+                    {data.avg_row_size}
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>Approx Rows Can Be Added</th>
+                  <td className="text-success fw-bold">
+                    {Number(data.approx_remaining_rows).toLocaleString()}
+                  </td>
                 </tr>
               </tbody>
             </table>
 
             <button
-              className="btn btn-warning fw-bold mt-3"
+              className="btn btn-outline-warning fw-bold mt-2"
               onClick={loadStatus}
             >
               🔄 Refresh
             </button>
           </>
         ) : (
-          <p className="text-danger">Failed to load data.</p>
+          <p className="text-danger">Failed to load memory data</p>
         )}
       </div>
     </div>
